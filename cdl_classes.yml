@@ -1,0 +1,24 @@
+corn_soy:
+  - 1
+  - 5
+  - 26
+developed:
+  - 82
+  - 121  # TODO 121 is dev/open, how do we want to classify it?
+  - 122
+  - 123
+  - 124
+forest:
+  - 63
+  - 141
+  - 142
+  - 143
+pasture:
+  - 176
+water:
+  - 83
+  - 111
+wetlands:
+  - 87
+  - 190
+  - 195
