@@ -20,28 +20,34 @@ def recode_cdl_labels(cdl_labels, label2id, cdl_mapping):
     return new_labels
 
 
+def preprocess_image(image):
+
+    return np.swapaxes(np.array(image, dtype=np.float32), 0, 2)[0:3] / 255.0
+
+
 def load_ds(
-    pixel_paths, label_paths, label2id, cdl_mapping, expected_shape=(1024, 1024)
+    pixel_paths, label_paths, label2id, cdl_mapping, expected_shape=(512, 512)
 ):
 
+    # TODO Use rasterio here?
     pixel_images = [Image.open(path) for path in pixel_paths]
     label_images = [Image.open(path) for path in label_paths]
 
-    # I've tiled NAIP scenes to 1024-by-1024 using gdal_retile.py (see readme)
+    # I've tiled NAIP scenes to 512-by-512 using gdal_retile.py (see readme)
     # However, some images at the edges end up being smaller (872-by-543 for example), and we drop those
     valid_idx = [image.size == expected_shape for image in pixel_images]
 
     valid_pixel_images = list(compress(pixel_images, valid_idx))
     valid_label_images = list(compress(label_images, valid_idx))
 
-    # Swap axes and slice bands/channels so that images are (3, 1024, 1024)
+    # Swap axes and slice bands/channels so that images are (3, 512, 512)
     # Divide by 255.0 so that pixel values are in [0, 1]
     # Subset to first three bands (RBG) only  # TODO Try to use fourth band, NIR
     # TODO Should these be lists?  Or big numpy arrays?
     return Dataset.from_dict(
         {
             "pixel_values": [
-                np.swapaxes(np.array(image, dtype=np.float32), 0, 2)[0:3] / 255.0
+                preprocess_image(image)
                 for image in valid_pixel_images
             ],
             "labels": [
@@ -57,14 +63,14 @@ def load_ds(
 def eval_transforms(batch, feature_extractor):
 
     # TODO Why does the [0] fix
-    # RuntimeError: Expected 3D (unbatched) or 4D (batched) input to conv2d, but got input of size: [2, 1, 3, 1024, 1024] ?
+    # RuntimeError: Expected 3D (unbatched) or 4D (batched) input to conv2d, but got input of size: [2, 1, 3, 512, 512] ?
     # Seems like this function is being applied to single images instead of entire batches
     return feature_extractor(
-        np.array(batch["pixel_values"], dtype=np.float32)[0],  # Shape (3, 1024, 1024)
-        np.array(batch["labels"], dtype=np.int32)[0],  # Shape (1024, 1024)
+        np.array(batch["pixel_values"], dtype=np.float32)[0],  # Shape (3, 512, 512)
+        np.array(batch["labels"], dtype=np.int32)[0],  # Shape (512, 512)
     )
 
     # return feature_extractor(
-    #     np.array(batch["pixel_values"], dtype=np.float32),  # Shape (1, 3, 1024, 1024)
-    #     np.array(batch["labels"], dtype=np.int32),  # TODO These have shape (1, 1024, 1024), should they be one hot encoded?
+    #     np.array(batch["pixel_values"], dtype=np.float32),  # Shape (1, 3, 512, 512)
+    #     np.array(batch["labels"], dtype=np.int32),  # TODO These have shape (1, 512, 512), should they be one hot encoded?
     # )

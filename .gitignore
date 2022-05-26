@@ -132,3 +132,5 @@ dmypy.json
 
 cdl_annotations/*tif
 naip/*tif
+
+models/*
