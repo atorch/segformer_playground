@@ -34,7 +34,7 @@ model = SegformerForSemanticSegmentation.from_pretrained(
     label2id=label2id,
 )
 
-epochs = 50
+epochs = 5
 lr = 0.00006
 batch_size = 2
 
@@ -83,7 +83,7 @@ trainer = Trainer(
     eval_dataset=test_ds,
 )
 
-# Progress!  Made it through two steps, got
-# ValueError: expected sequence of length 543 at dim 3 (got 1024)
-# possibly during eval?
 trainer.train()
+
+import pdb; pdb.set_trace()
+# TODO Save some predictions, visualize them
