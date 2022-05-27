@@ -27,11 +27,15 @@ def main():
     label2id = {key: idx for idx, key in enumerate(cdl_mapping.keys())}
 
     # All CDL classes not described in cdl_mapping are lumped into an "other" class
+    # TODO Road class
     label2id["other"] = len(cdl_mapping.keys())
 
     id2label = {v: k for k, v in label2id.items()}
 
     # TODO Any way to pass num_channels=4 anywhere, so that we can use R G B NIR from NAIP?
+    # Some weights of SegformerForSemanticSegmentation were not initialized from the model checkpoint
+    # at nvidia/segformer-b0-finetuned-ade-512-512 and are newly initialized because the shapes did not match: ...
+    # You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference -- yes, that's what we're doing
     model = SegformerForSemanticSegmentation.from_pretrained(
         PRETRAINED_MODEL,
         ignore_mismatched_sizes=True,
@@ -42,13 +46,12 @@ def main():
 
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     n_params = sum([np.prod(p.size()) for p in model_parameters])
-    print(f"{PRETRAINED_MODEL} n_params: {n_params}")
-    import pdb; pdb.set_trace()
+    print(f"number of parameters in {PRETRAINED_MODEL}: {n_params}")
 
-    epochs = 5
+    epochs = 20
     lr = 0.00006
 
-    batch_size = 2
+    batch_size = 6
 
     training_args = TrainingArguments(
         output_dir="models",
@@ -75,9 +78,8 @@ def main():
     train_ds = load_ds(train_pixel_paths, train_label_paths, label2id, cdl_mapping)
     test_ds = load_ds(train_pixel_paths, train_label_paths, label2id, cdl_mapping)
 
-    # TODO Try return_tensors="pt" here
     feature_extractor = SegformerFeatureExtractor.from_pretrained(
-        PRETRAINED_MODEL, do_resize=False, size=(512, 512), do_normalize=False,
+        PRETRAINED_MODEL, do_resize=False, do_normalize=False
     )
 
     eval_transforms_partial = partial(
@@ -94,7 +96,8 @@ def main():
     # On CPU, I got
     # {'train_runtime': 5832.0291, 'train_samples_per_second': 0.03, 'train_steps_per_second': 0.015, 'train_loss': 1.7238606413205464, 'epoch': 5.0}
     # Smaller images on GPU
-    # {'train_runtime': 3418.5948, 'train_samples_per_second': 0.241, 'train_steps_per_second': 0.121, 'train_loss': 1.5005914175366781, 'epoch': 5.0} 
+    # {'train_runtime': 3418.5948, 'train_samples_per_second': 0.241, 'train_steps_per_second': 0.121, 'train_loss': 1.5005914175366781, 'epoch': 5.0}
+    # {'train_runtime': 10632.6528, 'train_samples_per_second': 0.31, 'train_steps_per_second': 0.053, 'train_loss': 1.0592950055641788, 'epoch': 20.0}
     trainer.train()
 
 

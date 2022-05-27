@@ -17,6 +17,8 @@ def recode_cdl_labels(cdl_labels, label2id, cdl_mapping):
     for label, cdl_codes in cdl_mapping.items():
         new_labels[np.isin(cdl_labels, cdl_codes)] = label2id[label]
 
+    # TODO Add roads afterwards, burn in roads "above" CDL pixels
+
     return new_labels
 
 
@@ -68,9 +70,5 @@ def eval_transforms(batch, feature_extractor):
     return feature_extractor(
         np.array(batch["pixel_values"], dtype=np.float32)[0],  # Shape (3, 512, 512)
         np.array(batch["labels"], dtype=np.int32)[0],  # Shape (512, 512)
+        return_tensors="pt",
     )
-
-    # return feature_extractor(
-    #     np.array(batch["pixel_values"], dtype=np.float32),  # Shape (1, 3, 512, 512)
-    #     np.array(batch["labels"], dtype=np.int32),  # TODO These have shape (1, 512, 512), should they be one hot encoded?
-    # )
