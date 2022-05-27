@@ -1,4 +1,3 @@
-from PIL import Image
 import rasterio
 from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
 
@@ -12,14 +11,13 @@ feature_extractor = SegformerFeatureExtractor.from_pretrained(
     do_resize=False,
     do_normalize=False,
 )
-model = SegformerForSemanticSegmentation.from_pretrained("models/checkpoint-540")
+model = SegformerForSemanticSegmentation.from_pretrained("models/checkpoint-40")
 
 # This is one of the images we trained on
 # TODO Predict on a new (unseen) NAIP scene
-suffix = "11_11"
+suffix = "10_09"
 image_path = f"train/pixel/m_4209055_sw_15_1_20170819_{suffix}.tif"  # TODO Loop over multiple tiles
-# TODO Use rasterio here?
-image = Image.open(image_path)
+image = rasterio.open(image_path).read()
 
 
 # preprocess_image(image) returns a (3, 512, 512) numpy array
@@ -30,7 +28,7 @@ logits = model_output.logits  # Logits are 1/4th of the original width-by-height
 
 upsampled_logits = nn.functional.interpolate(
     logits,
-    size=image.size,  # (512, 512)
+    size=image.shape[1:],  # (512, 512)
     mode="bilinear",
 )
 

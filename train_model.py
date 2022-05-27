@@ -18,7 +18,9 @@ PRETRAINED_MODEL = "nvidia/segformer-b0-finetuned-ade-512-512"
 CDL_MAPPING_YML = "cdl_classes.yml"
 
 
-def main():
+def main(
+    epochs=2, lr=0.00006, batch_size=6,
+):
 
     with open(CDL_MAPPING_YML, "r") as infile:
 
@@ -47,11 +49,6 @@ def main():
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     n_params = sum([np.prod(p.size()) for p in model_parameters])
     print(f"number of parameters in {PRETRAINED_MODEL}: {n_params}")
-
-    epochs = 20
-    lr = 0.00006
-
-    batch_size = 6
 
     training_args = TrainingArguments(
         output_dir="models",
