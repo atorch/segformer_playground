@@ -11,11 +11,11 @@ feature_extractor = SegformerFeatureExtractor.from_pretrained(
     do_resize=False,
     do_normalize=False,
 )
-model = SegformerForSemanticSegmentation.from_pretrained("models/checkpoint-40")
+model = SegformerForSemanticSegmentation.from_pretrained("models/checkpoint-2680")
 
 # This is one of the images we trained on
 # TODO Predict on a new (unseen) NAIP scene
-suffix = "10_09"
+suffix = "01_04"
 image_path = f"train/pixel/m_4209055_sw_15_1_20170819_{suffix}.tif"  # TODO Loop over multiple tiles
 image = rasterio.open(image_path).read()
 
@@ -41,7 +41,9 @@ with rasterio.open(image_path) as input_raster:
 profile["count"] = 1
 
 prediction_path = f"prediction_rasters/prediction_{suffix}.tif"
+print(f"Saving {prediction_path}")
 with rasterio.open(prediction_path, "w", **profile) as output_raster:
 
         output_raster.write(predictions[0], 1)  # TODO Transpose?
+        # TODO Build colormap using id2label
         # output_raster.write_colormap(1, {k: v["rgb"] for k, v in colormap.items()})

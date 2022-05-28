@@ -19,7 +19,7 @@ CDL_MAPPING_YML = "cdl_classes.yml"
 
 
 def main(
-    epochs=2, lr=0.00006, batch_size=6,
+    epochs=50, lr=0.00006, batch_size=6,
 ):
 
     with open(CDL_MAPPING_YML, "r") as infile:
@@ -29,8 +29,11 @@ def main(
     label2id = {key: idx for idx, key in enumerate(cdl_mapping.keys())}
 
     # All CDL classes not described in cdl_mapping are lumped into an "other" class
-    # TODO Road class
     label2id["other"] = len(cdl_mapping.keys())
+
+    # Road labels are burned in "above" the CDL labels
+    # If something is a road, we label it as such regardless of what CDL says it is
+    label2id["road"] = len(cdl_mapping.keys()) + 1
 
     id2label = {v: k for k, v in label2id.items()}
 
@@ -69,11 +72,16 @@ def main(
     # These are big NAIP rasters that were retiled into 512-by-512 tiles
     # The tiles are originally of shape (512, 512, 4), i.e. bands last with 4 bands (R G B NIR)
     train_pixel_paths = sorted(glob.glob("train/pixel/*tif"))
-    train_label_paths = sorted(glob.glob("train/label/*tif"))
+    train_cdl_label_paths = sorted(glob.glob("train/cdl_label/*tif"))
+    train_road_label_paths = sorted(glob.glob("train/road_label/*tif"))
+
+    # TODO Load building annotatinos
+
+    assert len(train_pixel_paths) == len(train_cdl_label_paths) == len(train_road_label_paths)
 
     # TODO Separate test images in test/pixel and test/label dirs
-    train_ds = load_ds(train_pixel_paths, train_label_paths, label2id, cdl_mapping)
-    test_ds = load_ds(train_pixel_paths, train_label_paths, label2id, cdl_mapping)
+    train_ds = load_ds(train_pixel_paths, train_cdl_label_paths, train_road_label_paths, label2id, cdl_mapping)
+    test_ds = load_ds(train_pixel_paths, train_cdl_label_paths, train_road_label_paths, label2id, cdl_mapping)
 
     feature_extractor = SegformerFeatureExtractor.from_pretrained(
         PRETRAINED_MODEL, do_resize=False, do_normalize=False

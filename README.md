@@ -6,7 +6,17 @@ Messin around with
 
 ```bash
 gdal_retile.py -ps 512 512 -targetDir train/pixel/ naip/m_4209055_sw_15_1_20170819.tif
-gdal_retile.py -ps 512 512 -targetDir train/label/ cdl_annotations/m_4209055_sw_15_1_20170819.tif
+gdal_retile.py -ps 512 512 -targetDir train/pixel/ naip/m_4009001_sw_15_1_20170725.tif
+```
+
+```bash
+gdal_retile.py -ps 512 512 -targetDir train/cdl_label/ cdl_annotations/m_4209055_sw_15_1_20170819.tif
+gdal_retile.py -ps 512 512 -targetDir train/cdl_label/ cdl_annotations/m_4009001_sw_15_1_20170725.tif
+```
+
+```bash
+gdal_retile.py -ps 512 512 -targetDir train/road_label/ road_annotations/m_4209055_sw_15_1_20170819.tif
+gdal_retile.py -ps 512 512 -targetDir train/road_label/ road_annotations/m_4009001_sw_15_1_20170725.tif
 ```
 
 ```bash
