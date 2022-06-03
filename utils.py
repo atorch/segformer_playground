@@ -4,7 +4,7 @@ import numpy as np
 import rasterio
 
 
-def recode_labels(cdl_labels, road_labels, label2id, cdl_mapping):
+def recode_labels(cdl_labels, road_labels, building_labels, label2id, cdl_mapping):
 
     # TODO Test this fn
 
@@ -19,8 +19,11 @@ def recode_labels(cdl_labels, road_labels, label2id, cdl_mapping):
     for label, cdl_codes in cdl_mapping.items():
         new_labels[np.isin(cdl_labels, cdl_codes)] = label2id[label]
 
-    # Roads are burned in "above" CDL pixels
+    # Roads are burned in above CDL pixels (i.e. overwrite the CDL labels wherever roads are present)
     new_labels[road_labels > 0] = label2id["road"]
+
+    # Buildings are burned in above CDL and roads
+    new_labels[building_labels > 0] = label2id["building"]
 
     return new_labels
 
@@ -34,7 +37,7 @@ def preprocess_image(image):
     return np.array(image, dtype=np.float32)[0:3] / 255.0
 
 
-def load_ds(pixel_paths, cdl_label_paths, road_label_paths, label2id, cdl_mapping, expected_shape=(512, 512)):
+def load_ds(pixel_paths, cdl_label_paths, road_label_paths, building_label_paths, label2id, cdl_mapping, expected_shape=(512, 512)):
 
     # The images originally have 4 bands, and we load all of them here
     # We're loading rasters with shape (4, 512, 512)
@@ -48,6 +51,9 @@ def load_ds(pixel_paths, cdl_label_paths, road_label_paths, label2id, cdl_mappin
     print(f"Loading {len(road_label_paths)} road annotations")
     road_label_images = [rasterio.open(path).read(1) for path in road_label_paths]
 
+    print(f"Loading {len(building_label_paths)} building annotations")
+    building_label_images = [rasterio.open(path).read(1) for path in building_label_paths]
+
     # I've tiled NAIP scenes to 512-by-512 using gdal_retile.py (see readme)
     # However, some images at the edges end up being smaller, and we filter them out
     valid_idx = [image.shape[1:] == expected_shape for image in pixel_images]
@@ -56,6 +62,7 @@ def load_ds(pixel_paths, cdl_label_paths, road_label_paths, label2id, cdl_mappin
     valid_pixel_images = list(compress(pixel_images, valid_idx))
     valid_cdl_label_images = list(compress(cdl_label_images, valid_idx))
     valid_road_label_images = list(compress(road_label_images, valid_idx))
+    valid_building_label_images = list(compress(building_label_images, valid_idx))
 
     # TODO Should these be lists?  Or big numpy arrays?
     return Dataset.from_dict(
@@ -63,9 +70,9 @@ def load_ds(pixel_paths, cdl_label_paths, road_label_paths, label2id, cdl_mappin
             "pixel_values": [preprocess_image(image) for image in valid_pixel_images],
             "labels": [
                 recode_labels(
-                    cdl_image, road_image, label2id, cdl_mapping
+                    cdl_image, road_image, building_image, label2id, cdl_mapping
                 )
-                for cdl_image, road_image in zip(valid_cdl_label_images, valid_road_label_images)
+                for cdl_image, road_image, building_image in zip(valid_cdl_label_images, valid_road_label_images, valid_building_label_images)
             ],
         }
     )
