@@ -24,25 +24,25 @@ def get_label_mappings():
 
         cdl_mapping = yaml.safe_load(infile)
 
-    label2id = {key: idx for idx, key in enumerate(cdl_mapping.keys())}
+    label2id = {key: idx + 1 for idx, key in enumerate(cdl_mapping.keys())}
 
-    # All CDL classes not described in cdl_mapping are lumped into an "other" class
-    label2id["other"] = len(cdl_mapping.keys())
-
-    # Road labels are burned in "above" the CDL labels
+    # Road labels are burned in above the CDL labels
     # If something is a road, we label it as such regardless of what CDL says it is
     label2id["road"] = len(cdl_mapping.keys()) + 1
 
+    # Buildings are burned in above CDL and roads
     label2id["building"] = len(cdl_mapping.keys()) + 2
+
+    # TODO This _should_ be consistent with reduce_labels=True behavior, see docs
+    label2id["background"] = 0
 
     id2label = {v: k for k, v in label2id.items()}
 
-    # In label2id we have {'corn_soy': 0, 'developed': 1, 'forest': 2, 'pasture': 3, 'water': 4, 'wetlands': 5, 'other': 6, 'road': 7, 'building': 8}
     return label2id, id2label, cdl_mapping
 
 
 def main(
-    epochs=20, lr=0.00006, batch_size=6,
+    epochs=30, lr=0.00006, batch_size=4,
 ):
 
     label2id, id2label, cdl_mapping = get_label_mappings()
@@ -54,7 +54,9 @@ def main(
     model = SegformerForSemanticSegmentation.from_pretrained(
         PRETRAINED_MODEL,
         ignore_mismatched_sizes=True,  # TODO Is this needed?
-        num_labels=len(id2label),
+        num_labels=len(
+            id2label
+        ),  # TODO Should this be len(id2label) - 1, given the background class?
         id2label=id2label,
         label2id=label2id,
     )
@@ -66,7 +68,7 @@ def main(
     print(f"Number of parameters in {PRETRAINED_MODEL}: {n_params}")
 
     training_args = TrainingArguments(
-        output_dir="models",
+        output_dir="models",  # TODO Date
         learning_rate=lr,
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
@@ -79,7 +81,6 @@ def main(
         logging_steps=1,
         eval_accumulation_steps=5,
         load_best_model_at_end=True,
-        # ignore_index=label2id["developed"],  # TODO Does this work?  Make it an arg to main
     )
 
     # These are big NAIP rasters that were retiled into 512-by-512 tiles
@@ -115,8 +116,9 @@ def main(
         cdl_mapping,
     )
 
+    # See https://huggingface.co/docs/transformers/model_doc/segformer for reduce_labels explanation
     feature_extractor = SegformerFeatureExtractor.from_pretrained(
-        PRETRAINED_MODEL, do_resize=False, do_normalize=False
+        PRETRAINED_MODEL, do_resize=False, do_normalize=False, reduce_labels=True
     )
 
     eval_transforms_partial = partial(
