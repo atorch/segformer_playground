@@ -1,3 +1,4 @@
+import glob
 import pandas as pd
 import rasterio
 from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
@@ -12,6 +13,7 @@ from utils import preprocess_image, recode_labels
 feature_extractor = SegformerFeatureExtractor.from_pretrained(
     PRETRAINED_MODEL, do_resize=False, do_normalize=False, reduce_labels=True
 )
+# model = SegformerForSemanticSegmentation.from_pretrained("models_2022_06_15/checkpoint-3440")
 model = SegformerForSemanticSegmentation.from_pretrained("models/checkpoint-3540")
 
 # {0: 'background', 1: 'corn_soy', 2: 'developed', 3: 'forest', 4: 'pasture', 5: 'water', 6: 'wetlands', 7: 'road', 8: 'building'}
@@ -26,12 +28,13 @@ label2rgb = {
     "wetlands": (0, 153, 153),
 }
 
-for suffix in ["02_04", "02_05", "02_06", "02_07", "02_08", "02_09"]:
+# This is one of the images we trained on
+# TODO Predict on a new (unseen) NAIP scene
+for image_path in glob.glob("train/pixel/m_4109120_nw_15_1_20170819_*.tif"):
 
-    # This is one of the images we trained on
-    # TODO Predict on a new (unseen) NAIP scene
-    # image_path = f"train/pixel/m_4209055_sw_15_1_20170819_{suffix}.tif"
-    image_path = f"train/pixel/m_4109120_nw_15_1_20170819_{suffix}.tif"
+    # Grab suffix "02_06" from "m_4009001_sw_15_1_20170725_02_06.tif"
+    splits = image_path.split("_")
+    suffix = splits[-2] + "_" + splits[-1].replace(".tif", "")
 
     with rasterio.open(image_path) as input_raster:
         profile = input_raster.profile
@@ -78,7 +81,6 @@ for suffix in ["02_04", "02_05", "02_06", "02_07", "02_08", "02_09"]:
     # Save a second prediction raster of predicted logits
     # TODO Might be more interpretable to convert these to probabilities
     upsampled_logits = upsampled_logits.detach().numpy()
-    # profile["count"] = upsampled_logits.shape[1] - 1  # TODO
     profile["count"] = len(model.config.id2label) - 1
     profile["dtype"] = "float32"
     prediction_path = f"prediction_rasters/predicted_logits_{suffix}.tif"

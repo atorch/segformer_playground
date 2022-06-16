@@ -1,6 +1,8 @@
+import datetime as dt
 from functools import partial
 import glob
 import numpy as np
+import pathlib
 from transformers import (
     SegformerFeatureExtractor,
     SegformerForSemanticSegmentation,
@@ -67,8 +69,12 @@ def main(
     # Number of parameters in nvidia/segformer-b0-finetuned-ade-512-512: 3,716,457
     print(f"Number of parameters in {PRETRAINED_MODEL}: {n_params}")
 
+    output_dir = f"models_{dt.datetime.now().strftime('%Y_%m_%d')}"
+    print(f"Model training will use output_dir {output_dir}")
+    pathlib.Path(output_dir).mkdir(exist_ok=True)
+
     training_args = TrainingArguments(
-        output_dir="models",  # TODO Date
+        output_dir=output_dir,
         learning_rate=lr,
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
