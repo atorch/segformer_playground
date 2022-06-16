@@ -120,3 +120,4 @@ for image_path in glob.glob("train/pixel/m_4109120_nw_15_1_20170819_*.tif"):
     profile["dtype"] = "int32"
     with rasterio.open(label_path, "w", **profile) as output_raster:
         output_raster.write(labels[0], 1)
+        output_raster.write_colormap(1, colormap)  # Same colormap used for predictions

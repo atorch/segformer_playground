@@ -130,7 +130,6 @@ dmypy.json
 
 *~
 
-cdl_annotations/*tif
-naip/*tif
+**/*tif
 
 models/*
