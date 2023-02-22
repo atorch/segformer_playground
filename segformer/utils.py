@@ -6,12 +6,10 @@ import rasterio
 
 def recode_labels(cdl_labels, road_labels, building_labels, label2id, cdl_mapping):
 
-    # TODO Test this fn
-
     # The original CDL rasters have 200+ classes
     # We want to map those to the smaller set of classes in label2id
     # For example, multiple cdl classes will be grouped into a single "forest" class
-    # After that, we burn in road labels "above" CDL pixels
+    # After that, we burn in road and building labels "above" CDL pixels
 
     # Initialize labels as background
     new_labels = np.full(cdl_labels.shape, label2id["background"], dtype=np.int32)
@@ -26,6 +24,7 @@ def recode_labels(cdl_labels, road_labels, building_labels, label2id, cdl_mappin
     new_labels[building_labels > 0] = label2id["building"]
 
     # # Finally, relabel CDL developed (that is non-road, non-building) as background
+    # # TODO Make this an argument? Interesting to turn this on and off and see how it affects predictions
     # new_labels[new_labels == label2id["developed"]] = label2id["background"]
 
     return new_labels
