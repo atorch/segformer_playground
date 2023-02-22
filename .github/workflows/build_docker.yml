@@ -15,3 +15,4 @@ jobs:
       - uses: docker/build-push-action@v3
         with:
           tags: segformer:latest
+      - run: docker run -v ${{ github.workspace }}:/home/segformer_playground segformer pytest
