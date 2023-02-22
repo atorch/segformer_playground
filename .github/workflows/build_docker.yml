@@ -16,8 +16,10 @@ jobs:
         with:
           tags: segformer:latest
           load: true
+          no-cache: true
           context: .
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - run: docker run -v ${{ github.workspace }}:/home/segformer_playground segformer pytest
+      - name: Run pytest
+        run: docker run -v ${{ github.workspace }}:/home/segformer_playground segformer pytest
