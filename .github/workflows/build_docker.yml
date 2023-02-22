@@ -14,8 +14,4 @@ jobs:
       - uses: docker/setup-buildx-action@v2
       - uses: docker/build-push-action@v3
         with:
-          context: .
-          tags: ssmd:latest
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: segformer:latest
