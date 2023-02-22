@@ -14,12 +14,10 @@ jobs:
       - uses: docker/setup-buildx-action@v2
       - uses: docker/build-push-action@v4
         with:
-          tags: segformer:latest
-          load: true
-          no-cache: true
           context: .
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: segformer_playground:latest
+          load: true
+          cache-to: type=inline
 
       - name: Run pytest
-        run: docker run -v ${{ github.workspace }}:/home/segformer_playground segformer pytest
+        run: docker run -v ${{ github.workspace }}:/home/segformer_playground segformer_playground pytest
