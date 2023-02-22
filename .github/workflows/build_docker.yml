@@ -16,4 +16,5 @@ jobs:
         with:
           tags: segformer:latest
           load: true
+          context: .
       - run: docker run -v ${{ github.workspace }}:/home/segformer_playground segformer pytest
