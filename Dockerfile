@@ -1,6 +1,8 @@
 FROM pytorch/pytorch
 
-RUN apt-get update
+RUN apt update && \
+    apt install -y gdal-bin && \
+    rm -rf /var/lib/apt/lists
 
 WORKDIR /home/segformer_playground
 

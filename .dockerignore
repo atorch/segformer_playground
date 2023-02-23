@@ -1,2 +1,4 @@
 **/*tif
 models/*
+prediction_rasters/*
+recoded_labels/*
