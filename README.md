@@ -19,3 +19,7 @@ sudo docker build ~/segformer_playground --tag=segformer_playground
 sudo docker run --gpus all -it -v ~/segformer_playground:/home/segformer_playground segformer_playground bash
 python segformer/train_model.py
 ```
+
+```
+sudo docker run -v ~/segformer_playground:/home/segformer_playground segformer_playground pytest
+```

@@ -53,6 +53,9 @@ def test_recode_labels(label2id, cdl_mapping):
     # so the original CDL label remains unchanged
     assert recoded[0, 0] == label2id["water"]
 
+    # The original CDL label is a forest class and we have no buildings or roads in these pixels
+    assert recoded[1, 1] == recoded[1, 2] == label2id["forest"]
+
     # Road labels take precedence over the original CDL labels
     assert recoded[2, 3] == label2id["road"]
 
